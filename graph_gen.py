@@ -85,5 +85,5 @@ def generate(x, y, text=False):
     return
 
 # import data_collect
-# collected = data_collect.collect('BatAge', 'OPS+')
+# collected = data_collect.collect('BatAge', 'GIDP')
 # generate(collected[0], collected[1])

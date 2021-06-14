@@ -25,7 +25,7 @@ batting_from_verbose = {
     'Slugging': 'SLG',
     'On-base Plus Slugging': 'OPS+',
     'Total Bases': 'TB',
-    'Grounded Into Double Plays': 'GDP',
+    'Grounded Into Double Plays': 'GIDP',
     'Hit By Pitches': 'HBP',
     'Shutouts': 'SH',
     'Sacrifice Flies': 'SF',

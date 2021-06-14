@@ -5,7 +5,7 @@ pd.set_option('display.max_columns', None)
 szn2021 = Season(2021)
 bat21 = szn2021.batting_pages('standard').get_df('teams_standard_batting')
 plot_df = bat21.query('Tm != "LgAvg"')
-plot_df = plot_df.rename({'ops_plus': 'OPS+'}, axis=1)
+plot_df = plot_df.rename({'ops_plus': 'OPS+', 'GDP': 'GIDP'}, axis=1)
 
 
 def collect(x, y):
