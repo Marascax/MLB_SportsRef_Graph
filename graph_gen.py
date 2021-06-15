@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import seaborn as sns
@@ -7,14 +9,13 @@ import os
 from matplotlib.patches import Ellipse, Polygon
 from collections import namedtuple
 from datetime import date
-from PIL import Image
+import numpy as np
 
 
 def get_image(path):
     return OffsetImage(plt.imread(path), zoom=0.3)
 
 
-plt.xkcd()
 Bounds = namedtuple('Bounds', 'bottom_left top_right')
 Point = namedtuple('Point', 'x y')
 
@@ -47,16 +48,16 @@ def overlap_percent(bound_a, bound_b):
 
     # using area of overlap, area of both bounding boxes, calc the percentage of overlap
     overlap_percentage = area_overlap / (area_bound_a + area_bound_b - area_overlap)
-    return overlap_percentage
+    return round(overlap_percentage, 1)
 
 
 def overlapping_images(x, y, fig, ax, imgs):
     fig.canvas.draw()
-    xmin, xmax = plt.xlim()
-    ymin, ymax = plt.ylim()
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
     # for adding text labels, calc small increment in relation to x and y scale
-    xincrement = (xmax - xmin) / 1000
-    yincrement = (ymax - ymin) / 1000
+    xincrement = (xmax - xmin) / 100
+    yincrement = (ymax - ymin) / 100
 
     # amount of overlap needed at minimum to result in editing graph
     overlap_threshold = 0.7
@@ -128,7 +129,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                     arrow = ax.annotate('', xy=(arrow_x, arrow_y), xytext=(text_x, text_y),
                                         arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
                                         fontstretch='ultra-condensed')
-                    text = ax.text(text_x, text_y, team_a, fontsize='small', fontstretch='ultra-condensed')
+                    text = ax.text(text_x, text_y, team_a)
                     text_bbox = text.get_window_extent().inverse_transformed(ax.transData)
                     text_bottom_left = Point(text_bbox.x0, text_bbox.y0)
                     text_top_right = Point(text_bbox.x1, text_bbox.y1)
@@ -141,6 +142,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                         text_overlap_percentage = overlap_percent(text_bounds, box)
                         if text_overlap_percentage > overlap_threshold:
                             readjust = True
+                            arrow.remove()
                             break
                     # continuously readjust until a spot is found
                     while readjust:
@@ -169,7 +171,9 @@ def overlapping_images(x, y, fig, ax, imgs):
                                 arrow = ax.annotate('', xy=(arrow_x, arrow_y), xytext=coord,
                                             arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
                                             fontstretch='ultra-condensed')
-                                text = ax.text(coord[0], coord[1], team_a, fontsize='small', fontstretch='ultra-condensed')
+                                text = ax.text(coord[0], coord[1], team_a)
+                                print(f'text x,y = {coord[0]},{coord[1]}')
+                                print(f'arrow x,y = {arrow_x},{arrow_y}')
                                 break
 
                     # add text to bounding boxes
@@ -191,6 +195,10 @@ def generate(x, y, text=False):
     :param x: x-axis data
     :param y: y-axis data
     """
+    # increase spacing from axis tick label and axis itself
+    plt.rcParams['xtick.major.pad'] = '6'
+    plt.rcParams['ytick.major.pad'] = '6'
+
     fig, ax = plt.subplots(figsize=(15, 10))
     # increase axes limits to fit edge images inside graph
     xmin, xmax = x.min(), x.max()
@@ -200,21 +208,45 @@ def generate(x, y, text=False):
     x_pixels_per_unit = width / (xmax - xmin)
     y_pixels_per_unit = height / (ymax - ymin)
 
-    new_xmin = xmin - (75 / x_pixels_per_unit)
-    new_xmax = xmax + (75 / x_pixels_per_unit)
+    new_xmin = math.floor((xmin - (75 / x_pixels_per_unit)) * 10) / 10
+    new_xmax = math.ceil((xmax + (75 / x_pixels_per_unit)) * 10) / 10
 
-    plt.xlim(new_xmin, new_xmax)
+    # set x and y axis to 4 ticks total with even spacing
+    ax.set_xlim(new_xmin, new_xmax)
+    diff = new_xmax - new_xmin
+    xtick_one = round((1/3) * diff + new_xmin, 1)
+    xtick_two = round(new_xmax - (1/3) * diff, 1)
+    plt.xticks([new_xmin, xtick_one, xtick_two, new_xmax])
 
-    new_ymin = ymin - (75 / y_pixels_per_unit)
-    new_ymax = ymax + (75 / y_pixels_per_unit)
+    new_ymin = math.floor(ymin - (75 / y_pixels_per_unit))
+    new_ymax = math.ceil(ymax + (75 / y_pixels_per_unit))
 
-    plt.ylim(new_ymin, new_ymax)
+    ax.set_ylim(new_ymin, new_ymax)
+    diff = new_ymax - new_ymin
+    ytick_one = round((1 / 3) * diff + new_ymin, 1)
+    ytick_two = round(new_ymax - (1 / 3) * diff, 1)
+    plt.yticks([new_ymin, ytick_one, ytick_two, new_ymax])
+
+    ax.tick_params(axis=u'both', which=u'both', length=0)
+
+    for axis in ['top', 'bottom', 'left', 'right']:
+        ax.spines[axis].set_linewidth(0.2)
 
     # plot intersecting lines for quadrants
-    plt.vlines(x=(new_xmin + new_xmax) / 2, ymin=new_ymin, ymax=new_ymax, linestyles='dashed',
-               colors=(0.0, 0.0, 0.0, 0.4))
-    plt.hlines(y=(new_ymin + new_ymax) / 2, xmin=new_xmin, xmax=new_xmax, linestyles='dashed',
-               colors=(0.0, 0.0, 0.0, 0.4))
+    plt.vlines(x=(new_xmin + new_xmax) / 2, ymin=new_ymin, ymax=new_ymax,
+               colors=(0.0, 0.0, 0.0, 1.0))
+    plt.hlines(y=(new_ymin + new_ymax) / 2, xmin=new_xmin, xmax=new_xmax,
+               colors=(0.0, 0.0, 0.0, 1.0))
+
+    # plot lines for each tick
+    plt.vlines(x=xtick_one, ymin=new_ymin, ymax=new_ymax, linewidth=0.2,
+               colors=(0.0, 0.0, 0.0, 0.5))
+    plt.vlines(x=xtick_two, ymin=new_ymin, ymax=new_ymax, linewidth=0.2,
+               colors=(0.0, 0.0, 0.0, 0.5))
+    plt.hlines(y=ytick_one, xmin=new_xmin, xmax=new_xmax, linewidth=0.2,
+               colors=(0.0, 0.0, 0.0, 0.5))
+    plt.hlines(y=ytick_two, xmin=new_xmin, xmax=new_xmax, linewidth=0.2,
+               colors=(0.0, 0.0, 0.0, 0.5))
 
     texts = []
     imgs = []
@@ -243,21 +275,26 @@ def generate(x, y, text=False):
     x_abbrev, y_abbrev = x.name, y.name
     x_verbose, y_verbose = data_constants.stats_to_verbose[x_abbrev], data_constants.stats_to_verbose[y_abbrev]
 
-    # top left
-    ax.text(xmin, ymax, f'High {y_abbrev}\nLow {x_abbrev}', ha='left', va='center', color=(0.0, 0.0, 0.0, 0.4))
-    # bottom left
-    ax.text(xmin, ymin, f'Low {y_abbrev}\nLow {x_abbrev}', ha='left', va='center', color=(0.0, 0.0, 0.0, 0.4))
-    # top right
-    ax.text(xmax, ymax, f'High {y_abbrev}\nHigh {x_abbrev}', ha='right', va='center', color=(0.0, 0.0, 0.0, 0.4))
-    # bottom right
-    ax.text(xmax, ymin, f'High {y_abbrev}\nHigh {x_abbrev}', ha='right', va='center', color=(0.0, 0.0, 0.0, 0.4))
+    xincrement = (new_xmax - new_xmin) / 100
+    yincrement = (new_ymax - new_ymin) / 100
 
-    plt.xlabel(x_verbose, size=20)
-    plt.ylabel(y_verbose, size=20)
+    # top left
+    ax.text(new_xmin + xincrement, new_ymax - yincrement, f'High {y_abbrev}\nLow {x_abbrev}', ha='left', va='top', color=(0.0, 0.0, 0.0, 0.4))
+    # bottom left
+    ax.text(new_xmin + xincrement, new_ymin + yincrement, f'Low {y_abbrev}\nLow {x_abbrev}', ha='left', va='bottom', color=(0.0, 0.0, 0.0, 0.4))
+    # top right
+    ax.text(new_xmax - xincrement, new_ymax - yincrement, f'High {y_abbrev}\nHigh {x_abbrev}', ha='right', va='top', color=(0.0, 0.0, 0.0, 0.4))
+    # bottom right
+    ax.text(new_xmax - xincrement, new_ymin + yincrement, f'Low {y_abbrev}\nHigh {x_abbrev}', ha='right', va='bottom', color=(0.0, 0.0, 0.0, 0.4))
+
+    plt.xlabel(x_verbose, size=12)
+    plt.ylabel(y_verbose, size=12)
 
     d1 = date.today().strftime("%b %d, %Y")
-    plt.title(f'{x_verbose} ({x_abbrev}) vs {y_verbose} ({y_abbrev}) -- {d1}')
-    # plt.tight_layout()
+    plt.suptitle(f'{x_verbose} vs {y_verbose}', ha='center', va='bottom', fontsize=16, weight='bold')
+    plt.title(f'As of {d1}', weight='ultralight')
+    plt.tight_layout()
+    fig.subplots_adjust(top=0.95)
 
     # plt.show()
     plt.draw()
