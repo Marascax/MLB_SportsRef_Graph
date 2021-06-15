@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js">
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+    </script>
+
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css"
+        rel="stylesheet" type="text/css" />
+    <title>Baseball Graph Generator</title>
+</head>
+<body>
+    <h1>Baseball Graph Generator</h1>
+
+    <form action="/" method="post">
+        <input type="text" id="stat1" value="{{request.form['xstat']}}" name="xstat">
+        <input type="text" id="stat2" value="{{request.form['ystat']}}" name="ystat">
+        <button type="submit" id="gen_script" name="submit_button">Generate</button>
+    </form>
+    <img src="{{ result_image }}" alt="" visible="{{ show_image }}">
+
+    <script>
+        $( function() {
+            var availableTags = [
+                {% for term in terms %}
+                    "{{term}}",
+                {% endfor %}
+            ];
+            $("#stat1").autocomplete({
+                source: availableTags
+            });
+            $("#stat2").autocomplete({
+                source: availableTags
+            });
+        } );
+    </script>
+
+</body>
+</html>

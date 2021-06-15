@@ -81,7 +81,9 @@ def generate(x, y, text=False):
     plt.title(f'{x_verbose} ({x_abbrev}) vs {y_verbose} ({y_abbrev})')
     # plt.tight_layout()
 
-    plt.show()
+    # plt.show()
+    plt.draw()
+    plt.savefig(f'{os.path.dirname(os.path.abspath(__file__))}/static/images/result_plot.png')
     return
 
 # import data_collect
