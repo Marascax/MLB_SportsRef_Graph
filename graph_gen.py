@@ -65,7 +65,7 @@ def generate(x, y, text=False):
         adjustText.adjust_text(texts)
 
     x_abbrev, y_abbrev = x.name, y.name
-    x_verbose, y_verbose = data_constants.batting_to_verbose[x_abbrev], data_constants.batting_to_verbose[y_abbrev]
+    x_verbose, y_verbose = data_constants.stats_to_verbose[x_abbrev], data_constants.stats_to_verbose[y_abbrev]
 
     # top left
     ax.text(xmin, ymax, f'High {y_abbrev}\nLow {x_abbrev}', ha='left', va='center', color=(0.0, 0.0, 0.0, 0.4))

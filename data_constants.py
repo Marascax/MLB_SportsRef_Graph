@@ -3,7 +3,7 @@ teams = ['ARI', 'ATL', 'BAL', 'BOS', 'CHC', 'CHW', 'CIN', 'CLE', 'COL', 'DET', '
          'MIL', 'MIN', 'NYM', 'NYY', 'OAK', 'PHI', 'PIT', 'SDP', 'SEA', 'SFG', 'STL', 'TBR', 'TEX', 'TOR', 'WSN']
 
 # batting stats verbose names to abbreviations
-batting_from_verbose = {
+stats_from_verbose = {
     'Number of Batters': '#Bat',
     'Average Age of Batters': 'BatAge',
     'Runs Per Game': 'R/G',
@@ -35,4 +35,4 @@ batting_from_verbose = {
 
 # batting stats abbreviations to verbose names
 # reverse pairs of dict with verbose name keys
-batting_to_verbose = {v: k for (k, v) in batting_from_verbose.items()}
+stats_to_verbose = {v: k for (k, v) in stats_from_verbose.items()}
