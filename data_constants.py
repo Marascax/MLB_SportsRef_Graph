@@ -2,6 +2,11 @@
 teams = ['ARI', 'ATL', 'BAL', 'BOS', 'CHC', 'CHW', 'CIN', 'CLE', 'COL', 'DET', 'HOU', 'KCR', 'LAA', 'LAD', 'MIA',
          'MIL', 'MIN', 'NYM', 'NYY', 'OAK', 'PHI', 'PIT', 'SDP', 'SEA', 'SFG', 'STL', 'TBR', 'TEX', 'TOR', 'WSN']
 
+team_hex = ['#A71930', '#CE1141', '#DF4601', '#BD3039', '#0E3386', '#27251F', '#C6011F', '#E31937', '#33006F',
+            '#FA4616', '#EB6E1F', '#BD9B60', '#BA0021', '#005A9C', '#00A3E0', '#FFC52F', '#D31145', '#FF5910',
+            '#0C2340', '#003831', '#E81828', '#FDB827', '#2F241D', '#005C5C', '#FD5A1E', '#C41E3A', '#8FBCE6',
+            '#003278', '#134A8E', '#AB0003']
+
 # batting stats verbose names to abbreviations
 stats_from_verbose = {
     'Number of Batters': '#Bat',

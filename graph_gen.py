@@ -25,6 +25,53 @@ added_labels = {}
 added_arrows = {}
 
 
+def get_arrow_coordinates(text_bounds, img_bounds):
+    arrow_x, arrow_y = None, None
+
+    text_width = text_bounds.top_right.x - text_bounds.bottom_left.x
+    text_height = text_bounds.top_right.y - text_bounds.bottom_left.y
+    text_left, text_right = text_bounds.bottom_left.x, text_bounds.top_right.x
+    text_bottom, text_top = text_bounds.bottom_left.y, text_bounds.top_right.y
+
+    img_width = img_bounds.top_right.x - img_bounds.bottom_left.x
+    img_height = img_bounds.top_right.y - img_bounds.bottom_left.y
+    img_left, img_right = img_bounds.bottom_left.x, img_bounds.top_right.x
+    img_bottom, img_top = img_bounds.bottom_left.y, img_bounds.top_right.y
+
+    # left of image
+    if text_right < img_left:
+        arrow_x = text_right
+    # right of image
+    elif text_left > img_right:
+        arrow_x = text_left
+    # stuck halfway of image's left side
+    elif text_left < img_left < text_right:
+        arrow_x = text_right
+    # stuck halfway of image's right side
+    elif text_right > img_right > text_left:
+        arrow_x = text_left
+    # inbetween left and right
+    else:
+        arrow_x = text_left + (text_width / 2)
+
+    # above image
+    if text_bottom > img_top:
+        arrow_y = text_bottom
+    # below image
+    elif text_top < img_bottom:
+        arrow_y = text_top
+    # stuck halfway of image's bottom
+    elif text_bottom < img_bottom < text_top:
+        arrow_y = text_top
+    # stuck halfway of image's top
+    elif text_top > img_top > text_bottom:
+        arrow_y = text_bottom
+    # inbetween top and bottom
+    else:
+        arrow_y = text_bottom + (text_height / 2)
+    return arrow_x, arrow_y
+
+
 def overlap_percent(bound_a, bound_b):
     # for a and b, get the left, right, top, and bottom side of their bounding box
     a_left, a_right = bound_a.bottom_left.x, bound_a.top_right.x
@@ -46,21 +93,22 @@ def overlap_percent(bound_a, bound_b):
                     * (bound_b.top_right.y - bound_b.bottom_left.y))
 
     # using area of overlap, area of both bounding boxes, calc the percentage of overlap
-    overlap_percentage = area_overlap / (area_bound_a + area_bound_b - area_overlap)
-    return round(overlap_percentage, 1)
+    overlap_percentage = area_overlap / area_bound_a
+    return round(overlap_percentage, 3)
 
 
 def overlapping_images(x, y, fig, ax, imgs):
     fig.canvas.draw()
+    render = fig.canvas.get_renderer()
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
 
     # for adding text labels, calc small increment in relation to x and y scale
-    xincrement = (xmax - xmin) / 100
-    yincrement = (ymax - ymin) / 100
+    xincrement = (xmax - xmin) / 1000
+    yincrement = (ymax - ymin) / 1000
 
     # amount of overlap needed at minimum to result in editing graph
-    overlap_threshold = 0.7
+    overlap_threshold = 0.800
     boxes = []
 
     # get all the bounding boxes for the logos
@@ -71,10 +119,14 @@ def overlapping_images(x, y, fig, ax, imgs):
         top_right = Point(bbox.x1, bbox.y1)
         boxes.append(Bounds(bottom_left, top_right))
 
+    overlapped = []
+    overlapper = []
+
     # iterate all possible pairs of logos to check for any overlap
     for i in range(len(boxes) - 1):
         bound_a = boxes[i]
-        for j in range(i + 1, len(boxes)):
+        # text boxes are added at the end, so the first 30 boxes are actual mlb logos we want
+        for j in range(i + 1, 30):
             bound_b = boxes[j]
 
             # check for intersection
@@ -86,113 +138,166 @@ def overlapping_images(x, y, fig, ax, imgs):
 
                 overlap_percentage = overlap_percent(bound_a, bound_b)
                 if overlap_percentage >= overlap_threshold:
-                    print(f'Overlapping {team_a} and {team_b} {overlap_percentage * 100}%')
+                    # print(f'Overlapping {team_a} and {team_b} {overlap_percentage * 100}%')
+                    # track the logo being overlapped and logo that is causing the overlap
+                    overlapped.append(i)
+                    overlapper.append(j)
 
-                    text_x, text_y = None, None
-                    coord_l, coord_b = ax.transData.inverted().transform(bound_a.bottom_left)
-                    coord_r, coord_t = ax.transData.inverted().transform(bound_a.top_right)
-                    mid_x = (bound_a.bottom_left.x + bound_a.top_right.x) / 2
-                    mid_y = (bound_a.bottom_left.y + bound_a.top_right.y) / 2
-                    coord_mx, coord_my = ax.transData.inverted().transform((mid_x, mid_y))
+    for i, tm_a in enumerate(overlapped):
+        team_a = data_constants.teams[tm_a]
+        bound_a = boxes[tm_a]
+        bound_b = boxes[overlapper[i]]
 
-                    arrow_x, arrow_y = x[i], y[i]
-                    # to the right of team b
-                    if bound_a.bottom_left.x > bound_b.bottom_left.x:
-                        text_x = coord_r + xincrement
-                        # print(f'right of b, x = {text_x}')
-                    # to the left of team b
-                    elif bound_a.top_right.x < bound_b.top_right.x:
-                        text_x = coord_l - xincrement
-                        # print(f'left of b, x = {text_x}')
-                    # higher than team b
-                    if bound_a.top_right.y > bound_b.top_right.y:
-                        text_y = coord_t + yincrement
-                        # print(f'top of b, y = {text_y}')
-                    # lower than team b
-                    elif bound_a.bottom_left.y < bound_b.bottom_left.y:
-                        text_y = coord_b - yincrement
-                        # print(f'bottom of b, y = {text_y}')
+        # find text spot when only regarding the overlapper
+        text_x, text_y = None, None
+        coord_l, coord_b = ax.transData.inverted().transform(bound_a.bottom_left)
+        coord_r, coord_t = ax.transData.inverted().transform(bound_a.top_right)
+        mid_x = (bound_a.bottom_left.x + bound_a.top_right.x) / 2
+        mid_y = (bound_a.bottom_left.y + bound_a.top_right.y) / 2
+        coord_mx, coord_my = ax.transData.inverted().transform((mid_x, mid_y))
 
-                    # if team a and b 100% overlap (same left, right, top, bottom), it's better to label both teams
-                    # in the case that user couldn't tell there was another team behind team b
-                    if text_x is None and text_y is None:
-                        # default is just to the right of team b
-                        text_x = coord_r + xincrement
-                        text_y = coord_my
-                    # team a and b have the same left and right, set it to the middle
-                    if text_x is None:
-                        text_x = coord_mx
-                    # team a and b have same top and bottom
-                    if text_y is None:
-                        text_y = coord_my
+        arrow_x, arrow_y = x[tm_a], y[tm_a]
+        # to the right of team b
+        if bound_a.bottom_left.x > bound_b.bottom_left.x:
+            text_x = coord_r + xincrement
+            # print(f'right of b, x = {text_x}')
+        # to the left of team b
+        elif bound_a.top_right.x < bound_b.top_right.x:
+            text_x = coord_l - xincrement
+            # print(f'left of b, x = {text_x}')
+        # higher than team b
+        if bound_a.top_right.y > bound_b.top_right.y:
+            text_y = coord_t + yincrement
+            # print(f'top of b, y = {text_y}')
+        # lower than team b
+        elif bound_a.bottom_left.y < bound_b.bottom_left.y:
+            text_y = coord_b - yincrement
+            # print(f'bottom of b, y = {text_y}')
 
-                    # print(f'text x,y = {text_x},{text_y}')
-                    # print(f'arrow x,y = {arrow_x},{arrow_y}')
+        # if team a and b 100% overlap (same left, right, top, bottom), it's better to label both teams
+        # in the case that user couldn't tell there was another team behind team b
+        if text_x is None and text_y is None:
+            # default is just to the right of team b
+            text_x = coord_r + xincrement
+            text_y = coord_my
+        # team a and b have the same left and right, set it to the middle
+        if text_x is None:
+            text_x = coord_mx
+        # team a and b have same top and bottom
+        if text_y is None:
+            text_y = coord_my
 
-                    # create initial text annotation and find it's bounding box
-                    arrow = ax.annotate('', xy=(arrow_x, arrow_y), xytext=(text_x, text_y),
-                                        arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
-                                        fontstretch='ultra-condensed')
-                    text = ax.text(text_x, text_y, team_a)
-                    text_bbox = text.get_window_extent().inverse_transformed(ax.transData)
-                    text_bottom_left = Point(text_bbox.x0, text_bbox.y0)
-                    text_top_right = Point(text_bbox.x1, text_bbox.y1)
-                    text_bounds = Bounds(text_bottom_left, text_top_right)
+        # print(f'text x,y = {text_x},{text_y}')
+        # print(f'arrow x,y = {arrow_x},{arrow_y}')
 
-                    # check if text needs to be readjusted since it's overlapped by another plot
-                    readjust = False
-                    iteration = 0
-                    for box in boxes:
+        # create initial text annotation and find it's bounding box
+        text = ax.text(text_x, text_y, team_a)
+        fig.canvas.draw()
+        text_bbox = text.get_window_extent()
+        text_bottom_left = Point(text_bbox.x0, text_bbox.y0)
+        text_top_right = Point(text_bbox.x1, text_bbox.y1)
+        text_bounds = Bounds(text_bottom_left, text_top_right)
+        text.remove()
+
+        # get coords of where on label to end arrow
+        arrow_x_pixels, arrow_y_pixels = get_arrow_coordinates(text_bounds, bound_a)
+        # print(ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)))
+        arrow = ax.annotate('', xy=(arrow_x, arrow_y),
+                            xytext=ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)),
+                            arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
+                            fontstretch='ultra-condensed')
+        text = ax.text(text_x, text_y, team_a, weight='bold', color=data_constants.team_hex[tm_a])
+
+        pixel_x0, pixel_y0 = text_bbox.x0, text_bbox.y0
+        pixel_x1, pixel_y1 = text_bbox.x1, text_bbox.y1
+
+        text_pixel_width = pixel_x1 - pixel_x0
+        text_pixel_height = pixel_y1 - pixel_y0
+
+        # check if text needs to be readjusted since it's overlapped by another plot
+        # this is essentially a check and see if only the overlapper is the issue, to avoid extra unneeded work
+        readjust = False
+        iteration = 0
+        for k, box in enumerate(boxes):
+            if k == tm_a:
+                continue
+            # check for intersection
+            if not (text_bounds.top_right.x < box.bottom_left.x or text_bounds.bottom_left.x > box.top_right.x or
+                    text_bounds.top_right.y < box.bottom_left.y or text_bounds.bottom_left.y > box.top_right.y):
+                text_overlap_percentage = overlap_percent(text_bounds, box)
+                # print("box ", box)
+                # print("text ", text_bounds)
+                # print(f'{team_a} label & {data_constants.teams[k]} overlap {text_overlap_percentage * 100}')
+
+                if text_overlap_percentage > 0.5:
+                    readjust = True
+                    arrow.remove()
+                    text.remove()
+                    break
+
+        # more plots are causing overlap issue, continuously readjust until a spot is found
+        while readjust:
+            # for each iteration, go farther back and try spots around the logo
+            iteration = iteration + 1
+            xscale = xincrement * iteration
+            yscale = yincrement * iteration
+
+            # simplified spots completely around the logo
+            coords = [(coord_l - xscale, coord_t + yscale), (coord_l - xscale, coord_b - yscale),
+                      (coord_l - xscale, coord_my),
+                      (coord_r + xscale, coord_t + yscale), (coord_r + xscale, coord_b - yscale),
+                      (coord_r + xscale, coord_my),
+                      (coord_mx, coord_t + yscale), (coord_mx, coord_b - yscale)]
+
+            all_teams_clear = True
+            # check each possible text coord with current boxes
+            for coord in coords:
+                # convert the coordinate into pixels and mimick the text's bounding box without drawing it
+                coord_pixels_x0, coord_pixels_y0 = ax.transData.transform((coord[0], coord[1]))
+                coord_pixels_x1 = coord_pixels_x0 + text_pixel_width
+                coord_pixels_y1 = coord_pixels_y0 + text_pixel_height
+
+                text_bottom_left = Point(coord_pixels_x0, coord_pixels_y0)
+                text_top_right = Point(coord_pixels_x1, coord_pixels_y1)
+                text_bounds = Bounds(text_bottom_left, text_top_right)
+
+                # check theoretical bounding box against other boxes
+                for k, box in enumerate(boxes):
+                    if k == tm_a:
+                        continue
+                    if not (text_bounds.top_right.x < box.bottom_left.x or text_bounds.bottom_left.x > box.top_right.x or
+                            text_bounds.top_right.y < box.bottom_left.y or text_bounds.bottom_left.y > box.top_right.y):
                         text_overlap_percentage = overlap_percent(text_bounds, box)
-                        if text_overlap_percentage > overlap_threshold:
-                            readjust = True
-                            arrow.remove()
+                        # print(f'coords {coord[0]}, {coord[1]}')
+                        # print(f'{team_a} label & {data_constants.teams[k]} overlap {text_overlap_percentage * 100}')
+
+                        # if text would be covered by over half, stop early and try another
+                        if text_overlap_percentage > 0.5:
+                            all_teams_clear = False
                             break
 
-                    # continuously readjust until a spot is found
-                    while readjust:
-                        # for each iteration, go farther back and try spots around the logo
-                        iteration = iteration + 1
-                        xscale = xincrement * iteration
-                        yscale = yincrement * iteration
+                # once coord found that isn't overlapped, add arrow and put text over arrow
+                if all_teams_clear:
+                    arrow_x_pixels, arrow_y_pixels = get_arrow_coordinates(text_bounds, bound_a)
+                    # print(ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)))
+                    arrow = ax.annotate('', xy=(arrow_x, arrow_y),
+                                        xytext=ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)),
+                                        arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
+                                        fontstretch='ultra-condensed')
+                    text = ax.text(coord[0], coord[1], team_a, weight='bold', color=data_constants.team_hex[tm_a])
+                    readjust = False
+                    # print(f'text x,y = {coord[0]},{coord[1]}')
+                    # print(f'arrow x,y = {arrow_x},{arrow_y}')
+                    break
 
-                        # simplified spots completely around the logo
-                        coords = [(coord_l - xscale, coord_t + yscale), (coord_l - xscale, coord_b - yscale),
-                                  (coord_l - xscale, coord_my),
-                                  (coord_r + xscale, coord_t + yscale), (coord_r + xscale, coord_b - yscale),
-                                  (coord_r + xscale, coord_my),
-                                  (coord_mx, coord_t + yscale), (coord_mx, coord_b - yscale)]
+        # add text to bounding boxes
+        text_bbox = text.get_window_extent()
+        text_bottom_left = Point(text_bbox.x0, text_bbox.y0)
+        text_top_right = Point(text_bbox.x1, text_bbox.y1)
+        boxes.append(Bounds(text_bottom_left, text_top_right))
 
-                        # check each possible text coord with current boxes
-                        for coord in coords:
-                            text.set_position(coord)
-                            for box in boxes:
-                                text_overlap_percentage = overlap_percent(text_bounds, box)
-
-                                # under threshold of overlap means it's good enough
-                                if text_overlap_percentage < 0.1:
-                                    readjust = False
-                                    break
-
-                            # once finished, remove text, add arrow and replace text (put text over arrow)
-                            if not readjust:
-                                text.remove()
-                                arrow = ax.annotate('', xy=(arrow_x, arrow_y), xytext=coord,
-                                                    arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
-                                                    fontstretch='ultra-condensed')
-                                text = ax.text(coord[0], coord[1], team_a)
-                                # print(f'text x,y = {coord[0]},{coord[1]}')
-                                # print(f'arrow x,y = {arrow_x},{arrow_y}')
-                                break
-
-                    # add text to bounding boxes
-                    text_bbox = text.get_window_extent().inverse_transformed(ax.transData)
-                    text_bottom_left = Point(text_bbox.x0, text_bbox.y0)
-                    text_top_right = Point(text_bbox.x1, text_bbox.y1)
-                    boxes.append(Bounds(text_bottom_left, text_top_right))
-
-                    added_labels[team_a] = text
-                    added_arrows[team_a] = arrow
+        added_labels[team_a] = text
+        added_arrows[team_a] = arrow
 
     return
 
@@ -330,8 +435,8 @@ def generate(x, y, text=False, overlap_check=True):
     mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
 
     d1 = date.today().strftime("%b %d, %Y")
-    plt.suptitle(f'{x_verbose} vs {y_verbose}', ha='center', va='bottom', fontsize=16, weight='bold', x=mid)
-    ax.set_title(f'As of {d1}', weight='ultralight')
+    plt.suptitle(f'{x_verbose} vs {y_verbose}', ha='center', va='center', fontsize=16, weight='bold', x=mid)
+    ax.set_title(f'As of {d1}', weight='ultralight', va='top')
     plt.tight_layout()
     fig.subplots_adjust(top=0.95)
 
