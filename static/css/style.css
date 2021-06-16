@@ -1,0 +1,112 @@
+
+html {
+    overflow:   scroll;
+    font-family: 'Roboto', sans-serif;
+}
+::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent; /* make scrollbar transparent */
+}
+
+h1 {
+    font-weight: 300;
+    border: 2px #eee solid;
+    text-align: center;
+    padding: 10px;
+}
+
+.mainInput {
+    width: 50%;
+    margin: auto;
+    display: flex;
+}
+
+.mainInput > * {
+    margin: auto;
+}
+
+.mainInput button {
+    font-size: 18px;
+    background: none;
+    border: none;
+    font-weight: 700;
+    color: #424242;
+}
+
+.mainInput button:hover {
+    background: #616161;
+    color: white;
+    border-radius: 5px;
+    margin: 0 auto 0 auto;
+}
+
+.mainInput button:hover {
+    cursor: pointer;
+}
+
+.mainInput input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    margin: 0 5% 0 5%;
+    width: 50%;
+    font-size: 20px;
+    color: #424242;
+}
+
+.mainInput input:focus {
+    outline: none;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ui-tooltip {
+    background: #4a4a4a;
+    border: 2px solid #454545;
+    border-radius: 0px;
+    box-shadow: 0 0;
+}
+.ui-autocomplete {
+    overflow-y: auto;
+    max-height: 40%;
+    background: #BDBDBD;
+    font-weight: 300;
+    font-size: 16px;
+    border: none;
+    border-radius: 0px;
+}
+.ui-autocomplete::-webkit-scrollbar {
+    width: 5px;
+    background: transparent;
+}
+.ui-autocomplete::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ui-autocomplete::-webkit-scrollbar-thumb {
+    background: #616161;
+    border-radius: 20px;
+    border: 3px solid #616161;
+}
+
+.ui-autocomplete.source:hover {
+}
+
+.ui-menu .ui-menu-item a:hover {
+    background: transparent;
+    color: #f5f5f5;
+    border-radius: 0px;
+    border-left: 3px solid #f5f5f5;
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #616161 transparent;
+}
