@@ -11,9 +11,11 @@ html {
 
 h1 {
     font-weight: 300;
+    font-size: 60px;
     border: 2px #eee solid;
     text-align: center;
     padding: 10px;
+    letter-spacing: -0.5px;
 }
 
 .mainInput {
@@ -57,6 +59,24 @@ h1 {
 
 .mainInput input:focus {
     outline: none;
+}
+
+h2 {
+    text-align: center;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: 0.25px;
+}
+
+.mainSettings {
+    margin: auto;
+    width: 50%;
+    align-content: center;
+    display: flex;
+}
+
+.mainSettings label {
+    margin: 0 0 0 1%;
 }
 
 img {

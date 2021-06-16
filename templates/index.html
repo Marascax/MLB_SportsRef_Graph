@@ -24,6 +24,21 @@
             <input type="text" id="stat2" value="{{request.form['ystat']}}" name="ystat" placeholder="y-axis">
             <button type="submit" id="gen_script" name="submit_button">Generate</button>
         </div>
+        <br/>
+        <div style="width:50%;margin:auto;display:flex;">
+            <h2>Settings</h2>
+        </div>
+        <div class="mainSettings">
+            <input type="checkbox" id="labelSetting" name="labelSetting">
+            <label
+                title="
+                    Algorithm for labeling is unrefined and can be unhelpful if graph plots are packed together,
+also doesn't recognize that some logos are mostly transparent when detecting overlap
+                "
+                for="labelSetting">
+                Label Overlapped (Experimental)
+            </label>
+        </div>
     </form>
     <br/>
     <img src="{{ result_image }}" alt="" visible="{{ show_image }}">
@@ -51,6 +66,14 @@
                     });
                 }
             });
+            function onClickBox() {
+                let checked=$("#labelSetting").is(":checked");
+                localStorage.setItem("checked", checked);
+            }
+            let checked="true"==localStorage.getItem("checked");
+            $("#labelSetting").prop('checked', checked);
+            $("#labelSetting").on('click', onClickBox);
+
         } );
     </script>
 

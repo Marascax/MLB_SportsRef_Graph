@@ -18,6 +18,8 @@ bp_df = bp_df.rename({'ops_plus': 'OPS+', 'GDP': 'GIDP', 'R_x': 'R_h', 'H_x': 'H
 # print(bp_df.head())
 df = bp_df.merge(baserun_df, on='Tm')
 plot_df = df.query('Tm != "LgAvg"')
+plot_df["XBT%"] = plot_df["XBT%"].str.replace('%','').astype(int) / 100
+# print(plot_df['XBT%'])
 
 
 # print(df.head())

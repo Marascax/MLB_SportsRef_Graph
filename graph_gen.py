@@ -187,7 +187,7 @@ def overlapping_images(x, y, fig, ax, imgs):
     return
 
 
-def generate(x, y, text=False):
+def generate(x, y, text=False, overlap_check=True):
     """
     Generated graph given pandas Series for x- & y-axis
     :param text: use text labels for points instead of images
@@ -268,7 +268,7 @@ def generate(x, y, text=False):
 
     if text:
         adjustText.adjust_text(texts)
-    else:
+    elif overlap_check:
         overlapping_images(x, y, fig, ax, imgs)
 
     x_abbrev, y_abbrev = x.name, y.name
