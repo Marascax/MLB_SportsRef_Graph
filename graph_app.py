@@ -30,6 +30,10 @@ def index():
         ystat = re.search(stat_pattern, ystat).group(1)
         print(xstat, ystat)
 
+        # get setting for labeling
+        overlap_setting = request.form.get('labelSetting') is not None
+        print(overlap_setting)
+
         x, y = data_collect.collect(xstat, ystat)
-        graph_gen.generate(x, y)
+        graph_gen.generate(x, y, overlap_check=overlap_setting)
         return render_template('index.html', terms=terms, result_image='static/images/result_plot.png', show_image='visible')
