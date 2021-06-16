@@ -95,19 +95,19 @@ def overlapping_images(x, y, fig, ax, imgs):
                     # to the right of team b
                     if bound_a.bottom_left.x > bound_b.bottom_left.x:
                         text_x = coord_r + xincrement
-                        print(f'right of b, x = {text_x}')
+                        # print(f'right of b, x = {text_x}')
                     # to the left of team b
                     elif bound_a.top_right.x < bound_b.top_right.x:
                         text_x = coord_l - xincrement
-                        print(f'left of b, x = {text_x}')
+                        # print(f'left of b, x = {text_x}')
                     # higher than team b
                     if bound_a.top_right.y > bound_b.top_right.y:
                         text_y = coord_t + yincrement
-                        print(f'top of b, y = {text_y}')
+                        # print(f'top of b, y = {text_y}')
                     # lower than team b
                     elif bound_a.bottom_left.y < bound_b.bottom_left.y:
                         text_y = coord_b - yincrement
-                        print(f'bottom of b, y = {text_y}')
+                        # print(f'bottom of b, y = {text_y}')
                     # if team a and b 100% overlap (same left, right, top, bottom), it's better to label both teams
                     # in the case that user couldn't tell there was another team behind team b
                     if text_x is None and text_y is None:
@@ -121,8 +121,8 @@ def overlapping_images(x, y, fig, ax, imgs):
                     if text_y is None:
                         text_y = coord_my
 
-                    print(f'text x,y = {text_x},{text_y}')
-                    print(f'arrow x,y = {arrow_x},{arrow_y}')
+                    # print(f'text x,y = {text_x},{text_y}')
+                    # print(f'arrow x,y = {arrow_x},{arrow_y}')
 
                     # create initial text annotation and find it's bounding box
                     arrow = ax.annotate('', xy=(arrow_x, arrow_y), xytext=(text_x, text_y),
@@ -171,8 +171,8 @@ def overlapping_images(x, y, fig, ax, imgs):
                                                     arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
                                                     fontstretch='ultra-condensed')
                                 text = ax.text(coord[0], coord[1], team_a)
-                                print(f'text x,y = {coord[0]},{coord[1]}')
-                                print(f'arrow x,y = {arrow_x},{arrow_y}')
+                                # print(f'text x,y = {coord[0]},{coord[1]}')
+                                # print(f'arrow x,y = {arrow_x},{arrow_y}')
                                 break
 
                     # add text to bounding boxes
@@ -190,6 +190,7 @@ def overlapping_images(x, y, fig, ax, imgs):
 def generate(x, y, text=False, overlap_check=True):
     """
     Generated graph given pandas Series for x- & y-axis
+    :param overlap_check: check for logos that overlap and try to label hard to see plots
     :param text: use text labels for points instead of images
     :param x: x-axis data
     :param y: y-axis data
@@ -199,9 +200,13 @@ def generate(x, y, text=False, overlap_check=True):
     plt.rcParams['ytick.major.pad'] = '6'
 
     fig, ax = plt.subplots(figsize=(15, 10))
+
     # increase axes limits to fit edge images inside graph
     xmin, xmax = x.min(), x.max()
     ymin, ymax = y.min(), y.max()
+    xmean = x.mean()
+    ymean = y.mean()
+
     x0, y0, width, height = ax.get_tightbbox(fig.canvas.get_renderer()).bounds
 
     x_pixels_per_unit = width / (xmax - xmin)
@@ -213,17 +218,17 @@ def generate(x, y, text=False, overlap_check=True):
     # set x and y axis to 4 ticks total with even spacing
     ax.set_xlim(new_xmin, new_xmax)
     diff = new_xmax - new_xmin
-    xtick_one = round((1 / 3) * diff + new_xmin, 1)
-    xtick_two = round(new_xmax - (1 / 3) * diff, 1)
+    xtick_one = round((1 / 3) * diff + new_xmin, 2)
+    xtick_two = round(new_xmax - (1 / 3) * diff, 2)
     plt.xticks([new_xmin, xtick_one, xtick_two, new_xmax])
 
-    new_ymin = math.floor(ymin - (75 / y_pixels_per_unit))
-    new_ymax = math.ceil(ymax + (75 / y_pixels_per_unit))
+    new_ymin = math.floor((ymin - (75 / y_pixels_per_unit)) * 10) / 10
+    new_ymax = math.ceil((ymax + (75 / y_pixels_per_unit)) * 10) / 10
 
     ax.set_ylim(new_ymin, new_ymax)
     diff = new_ymax - new_ymin
-    ytick_one = round((1 / 3) * diff + new_ymin, 1)
-    ytick_two = round(new_ymax - (1 / 3) * diff, 1)
+    ytick_one = round((1 / 3) * diff + new_ymin, 2)
+    ytick_two = round(new_ymax - (1 / 3) * diff, 2)
     plt.yticks([new_ymin, ytick_one, ytick_two, new_ymax])
 
     ax.tick_params(axis=u'both', which=u'both', length=0)
@@ -231,11 +236,20 @@ def generate(x, y, text=False, overlap_check=True):
     for axis in ['top', 'bottom', 'left', 'right']:
         ax.spines[axis].set_linewidth(0.2)
 
-    # plot intersecting lines for quadrants
-    plt.vlines(x=(new_xmin + new_xmax) / 2, ymin=new_ymin, ymax=new_ymax,
+    # plot intersecting lines of the mean for main quadrants
+    print((new_xmin + new_xmax) / 2, xmean)
+    plt.vlines(x=xmean, ymin=new_ymin, ymax=new_ymax,
                colors=(0.0, 0.0, 0.0, 1.0))
-    plt.hlines(y=(new_ymin + new_ymax) / 2, xmin=new_xmin, xmax=new_xmax,
+
+    print((new_ymin + new_ymax) / 2, ymean)
+    plt.hlines(y=ymean, xmin=new_xmin, xmax=new_xmax,
                colors=(0.0, 0.0, 0.0, 1.0))
+
+    xincrement = (new_xmax - xtick_two) / 75
+    yincrement = (new_ymax - ytick_two) / 75
+
+    ax.text(xmean + xincrement, new_ymax - yincrement, fr'$\mathregular{{\mu}}$ = {round(xmean,2)}', fontweight='bold', va='top')
+    ax.text(new_xmax - xincrement, ymean - yincrement, fr'$\mathregular{{\mu}}$ = {round(ymean, 2)}', fontweight='bold', ha='right', va='top')
 
     # plot lines for each tick
     plt.vlines(x=xtick_one, ymin=new_ymin, ymax=new_ymax, linewidth=0.2,
@@ -293,9 +307,11 @@ def generate(x, y, text=False, overlap_check=True):
     plt.xlabel(x_verbose, size=12)
     plt.ylabel(y_verbose, size=12)
 
+    mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
+
     d1 = date.today().strftime("%b %d, %Y")
-    plt.suptitle(f'{x_verbose} vs {y_verbose}', ha='center', va='bottom', fontsize=16, weight='bold')
-    plt.title(f'As of {d1}', weight='ultralight')
+    plt.suptitle(f'{x_verbose} vs {y_verbose}', ha='center', va='bottom', fontsize=16, weight='bold', x=mid)
+    ax.set_title(f'As of {d1}', weight='ultralight')
     plt.tight_layout()
     fig.subplots_adjust(top=0.95)
 

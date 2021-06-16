@@ -7,7 +7,7 @@ stats_from_verbose = {
     'Number of Batters': '#Bat',
     'Average Age of Batters': 'BatAge',
     'Runs Per Game': 'R/G',
-    'Games': 'G',
+    # 'Games': 'G',
     'Plate Appearances': 'PA',
     'At Bats': 'AB',
     'Runs': 'R_h',

@@ -52,20 +52,22 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
             ];
             $("#stat1").autocomplete({
                 source: availableTags,
+                minLength: 0,
                 open: function(event, ui) {
                     $(this).autocomplete("widget").css({
                         "width": ($(this).width() + "px")
                     });
                 }
-            });
+            }).on('focus', function() { $(this).autocomplete("search"); });
             $("#stat2").autocomplete({
                 source: availableTags,
+                minLength: 0,
                 open: function(event, ui) {
                     $(this).autocomplete("widget").css({
                         "width": ($(this).width() + "px")
                     });
                 }
-            });
+            }).on('focus', function() { $(this).autocomplete("search"); });
             function onClickBox() {
                 let checked=$("#labelSetting").is(":checked");
                 localStorage.setItem("checked", checked);
