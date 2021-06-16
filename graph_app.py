@@ -31,7 +31,7 @@ def index():
         print(xstat, ystat)
 
         # get setting for labeling
-        overlap_setting = request.form.get('labelSetting') is not None
+        overlap_setting = bool(request.form.get('labelSetting'))
         print(overlap_setting)
 
         x, y = data_collect.collect(xstat, ystat)

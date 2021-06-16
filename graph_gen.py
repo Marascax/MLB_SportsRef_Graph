@@ -54,6 +54,7 @@ def overlapping_images(x, y, fig, ax, imgs):
     fig.canvas.draw()
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
+
     # for adding text labels, calc small increment in relation to x and y scale
     xincrement = (xmax - xmin) / 100
     yincrement = (ymax - ymin) / 100
@@ -61,6 +62,7 @@ def overlapping_images(x, y, fig, ax, imgs):
     # amount of overlap needed at minimum to result in editing graph
     overlap_threshold = 0.7
     boxes = []
+
     # get all the bounding boxes for the logos
     for img in imgs:
         # tight bbox gets bottom left (x0, x1) and top right corner (x1, y1) coords
@@ -68,11 +70,13 @@ def overlapping_images(x, y, fig, ax, imgs):
         bottom_left = Point(bbox.x0, bbox.y0)
         top_right = Point(bbox.x1, bbox.y1)
         boxes.append(Bounds(bottom_left, top_right))
+
     # iterate all possible pairs of logos to check for any overlap
     for i in range(len(boxes) - 1):
         bound_a = boxes[i]
         for j in range(i + 1, len(boxes)):
             bound_b = boxes[j]
+
             # check for intersection
             if not (bound_a.top_right.x < bound_b.bottom_left.x or bound_a.bottom_left.x > bound_b.top_right.x or
                     bound_a.top_right.y < bound_b.bottom_left.y or bound_a.bottom_left.y > bound_b.top_right.y):
@@ -108,6 +112,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                     elif bound_a.bottom_left.y < bound_b.bottom_left.y:
                         text_y = coord_b - yincrement
                         # print(f'bottom of b, y = {text_y}')
+
                     # if team a and b 100% overlap (same left, right, top, bottom), it's better to label both teams
                     # in the case that user couldn't tell there was another team behind team b
                     if text_x is None and text_y is None:
@@ -143,27 +148,32 @@ def overlapping_images(x, y, fig, ax, imgs):
                             readjust = True
                             arrow.remove()
                             break
+
                     # continuously readjust until a spot is found
                     while readjust:
                         # for each iteration, go farther back and try spots around the logo
                         iteration = iteration + 1
                         xscale = xincrement * iteration
                         yscale = yincrement * iteration
+
                         # simplified spots completely around the logo
                         coords = [(coord_l - xscale, coord_t + yscale), (coord_l - xscale, coord_b - yscale),
                                   (coord_l - xscale, coord_my),
                                   (coord_r + xscale, coord_t + yscale), (coord_r + xscale, coord_b - yscale),
                                   (coord_r + xscale, coord_my),
                                   (coord_mx, coord_t + yscale), (coord_mx, coord_b - yscale)]
+
                         # check each possible text coord with current boxes
                         for coord in coords:
                             text.set_position(coord)
                             for box in boxes:
                                 text_overlap_percentage = overlap_percent(text_bounds, box)
+
                                 # under threshold of overlap means it's good enough
                                 if text_overlap_percentage < 0.1:
                                     readjust = False
                                     break
+
                             # once finished, remove text, add arrow and replace text (put text over arrow)
                             if not readjust:
                                 text.remove()
@@ -237,11 +247,11 @@ def generate(x, y, text=False, overlap_check=True):
         ax.spines[axis].set_linewidth(0.2)
 
     # plot intersecting lines of the mean for main quadrants
-    print((new_xmin + new_xmax) / 2, xmean)
+    # print((new_xmin + new_xmax) / 2, xmean)
     plt.vlines(x=xmean, ymin=new_ymin, ymax=new_ymax,
                colors=(0.0, 0.0, 0.0, 1.0))
 
-    print((new_ymin + new_ymax) / 2, ymean)
+    # print((new_ymin + new_ymax) / 2, ymean)
     plt.hlines(y=ymean, xmin=new_xmin, xmax=new_xmax,
                colors=(0.0, 0.0, 0.0, 1.0))
 
@@ -260,6 +270,16 @@ def generate(x, y, text=False, overlap_check=True):
                colors=(0.0, 0.0, 0.0, 0.5))
     plt.hlines(y=ytick_two, xmin=new_xmin, xmax=new_xmax, linewidth=0.2,
                colors=(0.0, 0.0, 0.0, 0.5))
+
+    # add plot lines for whenever min x and/or y are < 0
+    if new_xmin < 0:
+        plt.vlines(x=0, ymin=new_ymin, ymax=new_ymax, linewidth=0.2,
+                   colors=(0.0, 0.0, 0.0, 0.5))
+        plt.xticks([new_xmin, 0, xtick_one, xtick_two, new_xmax])
+    if new_ymin < 0:
+        plt.hlines(y=0, xmin=new_xmin, xmax=new_xmax, linewidth=0.2,
+                   colors=(0.0, 0.0, 0.0, 0.5))
+        plt.yticks([new_ymin, 0, ytick_one, ytick_two, new_ymax])
 
     texts = []
     imgs = []
@@ -319,7 +339,3 @@ def generate(x, y, text=False, overlap_check=True):
     plt.draw()
     plt.savefig(f'{os.path.dirname(os.path.abspath(__file__))}/static/images/result_plot.png')
     return
-
-# import data_collect
-# collected = data_collect.collect('BatAge', 'GIDP')
-# generate(collected[0], collected[1])

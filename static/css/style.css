@@ -3,10 +3,15 @@ html {
     overflow:   scroll;
     font-family: 'Roboto', sans-serif;
 }
-::-webkit-scrollbar {
+html::-webkit-scrollbar {
     width: 0px;
     height: 0px;
     background: transparent; /* make scrollbar transparent */
+}
+
+html * {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
 }
 
 h1 {
@@ -113,6 +118,11 @@ img {
     border: 3px solid #616161;
 }
 
+.ui-autocomplete * {
+  scrollbar-width: thin;
+  scrollbar-color: #616161 transparent;
+}
+
 .ui-autocomplete.source:hover {
 }
 
@@ -126,7 +136,4 @@ img {
     border-bottom: none;
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #616161 transparent;
-}
+
