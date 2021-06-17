@@ -42,5 +42,5 @@ def index():
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
-    app.debug = False
-    app.run(threaded=True)
+    # app.debug = False
+    app.run(threaded=True, debug=False)
