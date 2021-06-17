@@ -393,7 +393,7 @@ def generate(x, y, text=False, overlap_check=True):
             # ax.annotate(tm, (x[i], y[i]))
             texts.append(ax.text(x[i], y[i], tm))
         else:
-            off_image = get_image(f'{os.path.dirname(os.path.abspath(__file__))}/plot_logos{os.path.sep}{tm}.png')
+            off_image = get_image(f'{os.path.dirname(os.path.abspath(__file__))}/static/plot_logos{os.path.sep}{tm}.png')
             imgs.append(
                 ax.add_artist(
                     AnnotationBbox(
