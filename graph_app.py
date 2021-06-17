@@ -37,3 +37,10 @@ def index():
         x, y = data_collect.collect(xstat, ystat)
         graph_gen.generate(x, y, overlap_check=overlap_setting)
         return render_template('index.html', terms=terms, result_image='static/images/result_plot.png', show_image='visible')
+    
+   
+if __name__ == "__main__":
+    # Setting debug to True enables debug output. This line should be
+    # removed before deploying a production app.
+    app.debug = False
+    app.run()
