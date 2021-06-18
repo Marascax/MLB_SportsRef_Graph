@@ -83,6 +83,7 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
                     valid = false;
                 }
                 if (valid) {
+                    $("body").css({"cursor": "wait"});
                     $("#stat1").css({"border-bottom-color": "#424242"});
                     $("#stat2").css({"border-bottom-color": "#424242"});
                     $("#graph_form").trigger("submit");
@@ -107,11 +108,12 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
                         inRangeY = (yPixel >= (y - 25)) && (yPixel <= (y + 25))
                         if( inRangeX && inRangeY ) {
                             [xVal, yVal] = {{data[key]}}
-                            hoverText += "{{key}}\n" + xVal.toFixed(1) + " {{stat_x}}\n" + yVal.toFixed(1) + " {{stat_y}}\n\n"
+                            hoverText += "{{key}}\n" + xVal.toFixed(3) + " {{stat_x}}\n" + yVal.toFixed(3) + " {{stat_y}}\n\n"
                             console.log("{{key}}", x, y);
                         }
                     {% endfor %}
                     $("#result_graph").attr("title", hoverText)
+                    $("body").css({"cursor": "default"});
                 {% endif %}
             })
         } );

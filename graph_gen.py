@@ -2,14 +2,12 @@ import math
 
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import seaborn as sns
+import matplotlib.patheffects as path_effects
 import data_constants
 import adjustText
 import os
-from matplotlib.patches import Ellipse, Polygon
 from collections import namedtuple
 from datetime import date
-import numpy as np
 
 
 def get_image(path):
@@ -26,7 +24,14 @@ added_arrows = {}
 
 
 def get_arrow_coordinates(text_bounds, img_bounds):
-    arrow_x, arrow_y = None, None
+    ax = plt.gca()
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+
+    # for adding text labels, calc small increment in relation to x and y scale
+    xincrement = (xmax - xmin) / 1000
+    yincrement = (ymax - ymin) / 1000
+    increments = 3
 
     text_width = text_bounds.top_right.x - text_bounds.bottom_left.x
     text_height = text_bounds.top_right.y - text_bounds.bottom_left.y
@@ -40,32 +45,32 @@ def get_arrow_coordinates(text_bounds, img_bounds):
 
     # left of image
     if text_right < img_left:
-        arrow_x = text_right
+        arrow_x = text_right - (increments * xincrement)
     # right of image
     elif text_left > img_right:
-        arrow_x = text_left
+        arrow_x = text_left + (increments * xincrement)
     # stuck halfway of image's left side
     elif text_left < img_left < text_right:
-        arrow_x = text_right
+        arrow_x = text_right - (increments * xincrement)
     # stuck halfway of image's right side
     elif text_right > img_right > text_left:
-        arrow_x = text_left
+        arrow_x = text_left + (increments * xincrement)
     # inbetween left and right
     else:
         arrow_x = text_left + (text_width / 2)
 
     # above image
     if text_bottom > img_top:
-        arrow_y = text_bottom
+        arrow_y = text_bottom + (increments * yincrement)
     # below image
     elif text_top < img_bottom:
-        arrow_y = text_top
+        arrow_y = text_top - (increments * yincrement)
     # stuck halfway of image's bottom
     elif text_bottom < img_bottom < text_top:
-        arrow_y = text_top
+        arrow_y = text_top - (increments * yincrement)
     # stuck halfway of image's top
     elif text_top > img_top > text_bottom:
-        arrow_y = text_bottom
+        arrow_y = text_bottom + (increments * yincrement)
     # inbetween top and bottom
     else:
         arrow_y = text_bottom + (text_height / 2)
@@ -99,7 +104,6 @@ def overlap_percent(bound_a, bound_b):
 
 def overlapping_images(x, y, fig, ax, imgs):
     fig.canvas.draw()
-    render = fig.canvas.get_renderer()
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
 
@@ -137,7 +141,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                 team_b = data_constants.teams[j]
 
                 overlap_percentage = overlap_percent(bound_a, bound_b)
-                if overlap_percentage >= overlap_threshold:
+                if overlap_percentage >= overlap_threshold and i not in overlapped:
                     # print(f'Overlapping {team_a} and {team_b} {overlap_percentage * 100}%')
                     # track the logo being overlapped and logo that is causing the overlap
                     overlapped.append(i)
@@ -206,9 +210,11 @@ def overlapping_images(x, y, fig, ax, imgs):
         # print(ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)))
         arrow = ax.annotate('', xy=(arrow_x, arrow_y),
                             xytext=ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)),
-                            arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
+                            arrowprops=dict(arrowstyle='-', lw=1, color=data_constants.team_hex[tm_a]),
+                            fontsize='small',
                             fontstretch='ultra-condensed')
         text = ax.text(text_x, text_y, team_a, weight='bold', color=data_constants.team_hex[tm_a])
+        text.set_path_effects([path_effects.Stroke(linewidth=3, foreground='white'), path_effects.Normal()])
 
         pixel_x0, pixel_y0 = text_bbox.x0, text_bbox.y0
         pixel_x1, pixel_y1 = text_bbox.x1, text_bbox.y1
@@ -223,7 +229,7 @@ def overlapping_images(x, y, fig, ax, imgs):
         for k, box in enumerate(boxes):
             if k == tm_a:
                 continue
-            # check for intersection
+            # check for any overlap
             if not (text_bounds.top_right.x < box.bottom_left.x or text_bounds.bottom_left.x > box.top_right.x or
                     text_bounds.top_right.y < box.bottom_left.y or text_bounds.bottom_left.y > box.top_right.y):
                 text_overlap_percentage = overlap_percent(text_bounds, box)
@@ -231,7 +237,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                 # print("text ", text_bounds)
                 # print(f'{team_a} label & {data_constants.teams[k]} overlap {text_overlap_percentage * 100}')
 
-                if text_overlap_percentage > 0.5:
+                if text_overlap_percentage > 0.1:
                     readjust = True
                     arrow.remove()
                     text.remove()
@@ -251,9 +257,9 @@ def overlapping_images(x, y, fig, ax, imgs):
                       (coord_r + xscale, coord_my),
                       (coord_mx, coord_t + yscale), (coord_mx, coord_b - yscale)]
 
-            all_teams_clear = True
             # check each possible text coord with current boxes
             for coord in coords:
+                all_teams_clear = True
                 # convert the coordinate into pixels and mimick the text's bounding box without drawing it
                 coord_pixels_x0, coord_pixels_y0 = ax.transData.transform((coord[0], coord[1]))
                 coord_pixels_x1 = coord_pixels_x0 + text_pixel_width
@@ -275,7 +281,7 @@ def overlapping_images(x, y, fig, ax, imgs):
                         # print(f'{team_a} label & {data_constants.teams[k]} overlap {text_overlap_percentage * 100}')
 
                         # if text would be covered by over half, stop early and try another
-                        if text_overlap_percentage > 0.5:
+                        if text_overlap_percentage > 0.1:
                             all_teams_clear = False
                             break
 
@@ -285,9 +291,11 @@ def overlapping_images(x, y, fig, ax, imgs):
                     # print(ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)))
                     arrow = ax.annotate('', xy=(arrow_x, arrow_y),
                                         xytext=ax.transData.inverted().transform((arrow_x_pixels, arrow_y_pixels)),
-                                        arrowprops=dict(arrowstyle='-', lw=1), fontsize='small',
-                                        fontstretch='ultra-condensed')
+                                        arrowprops=dict(arrowstyle='-', lw=1, color=data_constants.team_hex[tm_a]),
+                                        fontsize='small',
+                                        fontstretch='ultra-condensed', )
                     text = ax.text(coord[0], coord[1], team_a, weight='bold', color=data_constants.team_hex[tm_a])
+                    text.set_path_effects([path_effects.Stroke(linewidth=3, foreground='white'), path_effects.Normal()])
                     readjust = False
                     # print(f'text x,y = {coord[0]},{coord[1]}')
                     # print(f'arrow x,y = {arrow_x},{arrow_y}')
