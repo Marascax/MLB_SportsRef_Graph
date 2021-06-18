@@ -9,8 +9,12 @@ import graph_gen
 app = Flask(__name__)
 
 
+image_display = False
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global image_display
     verbose = data_constants.stats_from_verbose
     terms = []
     for key in verbose:
@@ -26,9 +30,16 @@ def index():
         xstat, ystat = request.form['xstat'], request.form['ystat']
         # use regex to extract each stat abbreviation
         stat_pattern = r'.+?\((.+?)\)'
-        xstat = re.search(stat_pattern, xstat).group(1)
-        ystat = re.search(stat_pattern, ystat).group(1)
-        print(xstat, ystat)
+        try:
+            xstat = re.search(stat_pattern, xstat).group(1)
+            ystat = re.search(stat_pattern, ystat).group(1)
+            print(xstat, ystat)
+        except AttributeError as ae:
+            print("caught empty field")
+            last_image = 'static/images/result_plot.png' if image_display else ''
+            show_image = 'visible' if image_display else 'hidden'
+            return render_template('index.html', terms=terms, result_image=last_image,
+                                   show_image=show_image)
 
         # get setting for labeling
         overlap_setting = bool(request.form.get('labelSetting'))
@@ -36,9 +47,11 @@ def index():
 
         x, y = data_collect.collect(xstat, ystat)
         graph_gen.generate(x, y, overlap_check=overlap_setting)
-        return render_template('index.html', terms=terms, result_image='static/images/result_plot.png', show_image='visible')
-    
-   
+        image_display = True
+        return render_template('index.html', terms=terms, result_image='static/images/result_plot.png',
+                               show_image='visible')
+
+
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.

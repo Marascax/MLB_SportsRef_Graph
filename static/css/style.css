@@ -56,10 +56,19 @@ h1 {
     border-top: none;
     border-left: none;
     border-right: none;
+    border-bottom-color: #424242;
     margin: 0 5% 0 5%;
     width: 50%;
     font-size: 20px;
     color: #424242;
+}
+
+.mainInput input::placeholder {
+    color: #BDBDBD;
+}
+
+.mainInput input:focus::placeholder {
+    color: transparent;
 }
 
 .mainInput input:focus {
