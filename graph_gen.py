@@ -143,6 +143,8 @@ def overlapping_images(x, y, fig, ax, imgs):
                     overlapped.append(i)
                     overlapper.append(j)
 
+    # iterate through all logos being overlapped and label them based on the main logo overlapping it and
+    # any surrounding logos
     for i, tm_a in enumerate(overlapped):
         team_a = data_constants.teams[tm_a]
         bound_a = boxes[tm_a]
@@ -265,7 +267,8 @@ def overlapping_images(x, y, fig, ax, imgs):
                 for k, box in enumerate(boxes):
                     if k == tm_a:
                         continue
-                    if not (text_bounds.top_right.x < box.bottom_left.x or text_bounds.bottom_left.x > box.top_right.x or
+                    if not (
+                            text_bounds.top_right.x < box.bottom_left.x or text_bounds.bottom_left.x > box.top_right.x or
                             text_bounds.top_right.y < box.bottom_left.y or text_bounds.bottom_left.y > box.top_right.y):
                         text_overlap_percentage = overlap_percent(text_bounds, box)
                         # print(f'coords {coord[0]}, {coord[1]}')
@@ -363,8 +366,10 @@ def generate(x, y, text=False, overlap_check=True):
     xincrement = (new_xmax - xtick_two) / 75
     yincrement = (new_ymax - ytick_two) / 75
 
-    ax.text(xmean + xincrement, new_ymax - yincrement, fr'$\mathregular{{\mu}}$ = {round(xmean,2)}', fontweight='bold', va='top')
-    ax.text(new_xmax - xincrement, ymean - yincrement, fr'$\mathregular{{\mu}}$ = {round(ymean, 2)}', fontweight='bold', ha='right', va='top')
+    ax.text(xmean + xincrement, new_ymax - yincrement, fr'$\mathregular{{\mu}}$ = {round(xmean, 2)}', fontweight='bold',
+            va='top')
+    ax.text(new_xmax - xincrement, ymean - yincrement, fr'$\mathregular{{\mu}}$ = {round(ymean, 2)}', fontweight='bold',
+            ha='right', va='top')
 
     # plot lines for each tick
     plt.vlines(x=xtick_one, ymin=new_ymin, ymax=new_ymax, linewidth=0.2,
@@ -393,7 +398,8 @@ def generate(x, y, text=False, overlap_check=True):
             # ax.annotate(tm, (x[i], y[i]))
             texts.append(ax.text(x[i], y[i], tm))
         else:
-            off_image = get_image(f'{os.path.dirname(os.path.abspath(__file__))}/static/plot_logos{os.path.sep}{tm}.png')
+            off_image = get_image(
+                f'{os.path.dirname(os.path.abspath(__file__))}/static/plot_logos{os.path.sep}{tm}.png')
             imgs.append(
                 ax.add_artist(
                     AnnotationBbox(
@@ -443,4 +449,20 @@ def generate(x, y, text=False, overlap_check=True):
     # plt.show()
     plt.draw()
     plt.savefig(f'{os.path.dirname(os.path.abspath(__file__))}/static/images/result_plot.png')
-    return
+
+    # get and return the pixel locations for each logo
+    graph_width, graph_height = fig.canvas.get_width_height()
+    x_pixels = []
+    y_pixels = []
+    # convert the x and y limits of the graph to pixels
+    xl, xr = ax.get_xlim()
+    yb, yt = ax.get_ylim()
+    xr_pixel, yt_pixel = ax.transData.transform((xr, yt))
+    # might need this if the html affects the image resolution on the webpage
+    x_diff = graph_width - xr_pixel
+    y_diff = graph_height - yt_pixel
+    for i in range(30):
+        x_pixel, y_pixel = ax.transData.transform((x[i], y[i]))
+        x_pixels.append(x_pixel)
+        y_pixels.append(graph_height - y_pixel)
+    return x_pixels, y_pixels

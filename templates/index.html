@@ -41,7 +41,7 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
         </div>
     </form>
     <br/>
-    <img src="{{ result_image }}" alt="" visible="{{ show_image }}">
+    <img style="width: auto; height:auto;" id="result_graph" src="{{ result_image }}" alt="" visible="{{ show_image }}">
 
     <script>
         $( function() {
@@ -91,7 +91,29 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
             let checked="true"==localStorage.getItem("checked");
             $("#labelSetting").prop('checked', checked);
             $("#labelSetting").on('click', onClickBox);
-
+            $("#result_graph").on('mousemove', function(event) {
+                let xMargin = ($("#result_graph").outerWidth() - $("#result_graph").width()) / 2;
+                let yMargin = ($("#result_graph").outerHeight() - $("#result_graph").height()) / 2;
+                let x = (event.pageX + xMargin) - $(this).offset().left
+                let y = (event.pageY + yMargin) - $(this).offset().top
+                // console.log(x, y)
+                let inRangeX, inRangeY, xPixel, yPixel, xVal, yVal;
+                let hoverText = ""
+                {% for key in pixels_x.keys() %}
+                    xPixel = {{pixels_x[key]}}
+                    yPixel = {{pixels_y[key]}}
+                    inRangeX = (xPixel >= (x - 25)) && (xPixel <= (x + 25))
+                    inRangeY = (yPixel >= (y - 25)) && (yPixel <= (y + 25))
+                    if( inRangeX && inRangeY ) {
+                        [xVal, yVal] = {{data[key]}}
+                        hoverText += "{{key}}\n" + xVal.toFixed(1) + " {{stat_x}}\n" + yVal.toFixed(1) + " {{stat_y}}\n\n"
+                        console.log("{{key}}", x, y);
+                    }
+                {% endfor %}
+                if (hoverText.length > 0) {
+                    $("#result_graph").attr("title", hoverText)
+                }
+            })
         } );
     </script>
 

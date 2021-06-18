@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify
 import matplotlib.pyplot as plt
 import re
 import sys
@@ -46,9 +46,24 @@ def index():
         print(overlap_setting)
 
         x, y = data_collect.collect(xstat, ystat)
-        graph_gen.generate(x, y, overlap_check=overlap_setting)
+        # pixel coords of each logo, used to track where they are in relation to the image on the webpage
+        pixels_x, pixels_y = graph_gen.generate(x, y, overlap_check=overlap_setting)
+
+        # mapping each team abbreviation to their x and y pixel coord
+        x_pixels = {}
+        y_pixels = {}
+        data = {}  # have the actual stat data for the actual hover text
+        for i in range(30):
+            team = data_constants.teams[i]
+            x_pixels[team] = pixels_x[i]
+            y_pixels[team] = pixels_y[i]
+            data[team] = [x[i], y[i]]
         image_display = True
-        return render_template('index.html', terms=terms, result_image='static/images/result_plot.png',
+        return render_template('index.html', terms=terms,
+                               pixels_x=x_pixels, stat_x=xstat,
+                               pixels_y=y_pixels, stat_y=ystat,
+                               data=data,
+                               result_image='static/images/result_plot.png',
                                show_image='visible')
 
 
