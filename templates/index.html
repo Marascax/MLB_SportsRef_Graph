@@ -111,9 +111,7 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
                             console.log("{{key}}", x, y);
                         }
                     {% endfor %}
-                    if (hoverText.length > 0) {
-                        $("#result_graph").attr("title", hoverText)
-                    }
+                    $("#result_graph").attr("title", hoverText)
                 {% endif %}
             })
         } );
