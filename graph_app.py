@@ -49,7 +49,7 @@ def index():
         overlap_setting = bool(request.form.get('labelSetting'))
         print(overlap_setting)
 
-        x, y = data_collect.collect(xstat, ystat)
+        x, y = data_collect.get_data(xstat, ystat)
         # pixel coords of each logo, used to track where they are in relation to the image on the webpage
         pixels_x, pixels_y = graph_gen.generate(x, y, overlap_check=overlap_setting)
 
