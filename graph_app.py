@@ -21,7 +21,7 @@ def index():
         terms.append(f'{key} ({verbose[key]})')
     if request.method == 'GET':
         print('GET')
-        return render_template('index.html', terms=terms, show_image='hidden')
+        return render_template('index.html', terms=terms, data=None, show_image='hidden')
     if request.method == 'POST':
         print('POST')
         print(request.form['xstat'], request.form['ystat'])
@@ -38,7 +38,11 @@ def index():
             print("caught empty field")
             last_image = 'static/images/result_plot.png' if image_display else ''
             show_image = 'visible' if image_display else 'hidden'
-            return render_template('index.html', terms=terms, result_image=last_image,
+            return render_template('index.html', terms=terms,
+                                   pixels_x={}, stat_x=xstat,
+                                   pixels_y={}, stat_y=ystat,
+                                   data=None,
+                                   result_image=last_image,
                                    show_image=show_image)
 
         # get setting for labeling
