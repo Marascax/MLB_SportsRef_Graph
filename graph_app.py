@@ -35,12 +35,10 @@ def index():
             ystat = re.search(stat_pattern, ystat).group(1)
             print(xstat, ystat)
         except AttributeError as ae:
-            print("caught empty field")
+            print("caught bad field")
             last_image = 'static/images/result_plot.png' if image_display else ''
             show_image = 'visible' if image_display else 'hidden'
             return render_template('index.html', terms=terms,
-                                   pixels_x={}, stat_x=xstat,
-                                   pixels_y={}, stat_y=ystat,
                                    data=None,
                                    result_image=last_image,
                                    show_image=show_image)
@@ -56,16 +54,23 @@ def index():
         # mapping each team abbreviation to their x and y pixel coord
         x_pixels = {}
         y_pixels = {}
-        data = {}  # have the actual stat data for the actual hover text
+        plots = {}
+        abbrev = data_constants.stats_to_verbose
+        # hold everything needed in one dict to clean param passing and readibility
+        data = {'xstat': xstat,
+                'xround': data_constants.stat_rounding[abbrev[xstat]],
+                'ystat': ystat,
+                'yround': data_constants.stat_rounding[abbrev[ystat]]}
         for i in range(30):
             team = data_constants.teams[i]
             x_pixels[team] = pixels_x[i]
             y_pixels[team] = pixels_y[i]
-            data[team] = [x[i], y[i]]
+            plots[team] = [x[i], y[i]]
+        data['xpixels'] = x_pixels
+        data['ypixels'] = y_pixels
+        data['plots'] = plots
         image_display = True
         return render_template('index.html', terms=terms,
-                               pixels_x=x_pixels, stat_x=xstat,
-                               pixels_y=y_pixels, stat_y=ystat,
                                data=data,
                                result_image='static/images/result_plot.png',
                                show_image='visible')

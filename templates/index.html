@@ -101,14 +101,15 @@ also doesn't recognize that some logos are mostly transparent when detecting ove
                     // console.log(x, y)
                     let inRangeX, inRangeY, xPixel, yPixel, xVal, yVal;
                     let hoverText = ""
-                    {% for key in pixels_x.keys() %}
-                        xPixel = {{pixels_x[key]}}
-                        yPixel = {{pixels_y[key]}}
+                    {% for key in data['xpixels'].keys() %}
+                        xPixel = {{data['xpixels'][key]}}
+                        yPixel = {{data['ypixels'][key]}}
                         inRangeX = (xPixel >= (x - 25)) && (xPixel <= (x + 25))
                         inRangeY = (yPixel >= (y - 25)) && (yPixel <= (y + 25))
                         if( inRangeX && inRangeY ) {
-                            [xVal, yVal] = {{data[key]}}
-                            hoverText += "{{key}}\n" + xVal.toFixed(3) + " {{stat_x}}\n" + yVal.toFixed(3) + " {{stat_y}}\n\n"
+                            [xVal, yVal] = {{data['plots'][key]}}
+                            hoverText += "{{key}}\n" + xVal.toFixed({{data['xround']}})
+                                + " {{data['xstat']}}\n" + yVal.toFixed({{data['yround']}}) + " {{data['ystat']}}\n\n"
                             console.log("{{key}}", x, y);
                         }
                     {% endfor %}
